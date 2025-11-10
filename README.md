@@ -4,3 +4,4 @@
 In Anaconda:
  pip install qiskit
  pip install qiskit-aer
+ jupyter notebook
