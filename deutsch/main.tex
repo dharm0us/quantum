@@ -1,0 +1,127 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{braket}
+\begin{document}
+
+
+\section*{Deutsch Algorithm: Full Derivation}
+
+We begin with two qubits initialized as
+\[
+\ket{\psi_0} = \ket{0}\ket{1}.
+\]
+
+\subsection*{1. Apply Hadamard Gates}
+
+Applying the Hadamard to each qubit gives
+\[
+H\ket{0} = \frac{\ket{0}+\ket{1}}{\sqrt{2}}, 
+\qquad
+H\ket{1} = \frac{\ket{0}-\ket{1}}{\sqrt{2}}.
+\]
+
+Thus
+\[
+\ket{\psi_1}
+= (H\ket{0}) \otimes (H\ket{1})
+= \frac{1}{2}(\ket{0}+\ket{1})(\ket{0}-\ket{1}).
+\]
+
+Expanding:
+\[
+\ket{\psi_1}
+= \frac{1}{2}\big( \ket{00} - \ket{01} + \ket{10} - \ket{11} \big).
+\]
+
+\subsection*{2. Apply the Oracle $U_f$}
+
+The oracle acts as follows:
+\[
+U_f \ket{x,y} = \ket{x,\, y \oplus f(x)}.
+\]
+
+Because the second qubit is in the state
+\(
+\frac{1}{\sqrt{2}}(\ket{0}-\ket{1}),
+\)
+the oracle adds a phase $(-1)^{f(x)}$ depending on $x$.  
+Thus the state becomes
+\[
+\ket{\psi_2}
+= \frac{1}{\sqrt{2}}\left( (-1)^{f(0)}\ket{0} + (-1)^{f(1)}\ket{1} \right)
+\otimes \frac{1}{\sqrt{2}}(\ket{0}-\ket{1}).
+\]
+
+We only care about the \emph{top} qubit for the final measurement, so define
+\[
+\ket{\psi_{\text{top}}}
+= \frac{1}{\sqrt{2}}\left( (-1)^{f(0)}\ket{0} + (-1)^{f(1)}\ket{1} \right).
+\]
+
+\subsection*{3. Apply the Final Hadamard}
+
+Applying $H$ to the top qubit:
+
+\[
+H\ket{0} = \frac{\ket{0}+\ket{1}}{\sqrt{2}}, \qquad
+H\ket{1} = \frac{\ket{0}-\ket{1}}{\sqrt{2}}.
+\]
+
+Thus
+\[
+H\ket{\psi_{\text{top}}}
+= \frac{1}{\sqrt{2}}
+\left[
+(-1)^{f(0)} H\ket{0}
++
+(-1)^{f(1)} H\ket{1}
+\right].
+\]
+
+Substituting the Hadamard results:
+\[
+H\ket{\psi_{\text{top}}}
+=
+\frac{1}{2}\Big[
+(-1)^{f(0)}(\ket{0}+\ket{1})
++
+(-1)^{f(1)}(\ket{0}-\ket{1})
+\Big].
+\]
+
+Group the $\ket{0}$ and $\ket{1}$ terms:
+\[
+H\ket{\psi_{\text{top}}}
+=
+\frac{1}{2}\left[
+\left((-1)^{f(0)} + (-1)^{f(1)}\right)\ket{0}
++
+\left((-1)^{f(0)} - (-1)^{f(1)}\right)\ket{1}
+\right].
+\]
+
+\subsection*{4. Evaluate All 4 Possible Functions}
+
+There are four Boolean functions $f:\{0,1\}\to\{0,1\}$.
+
+\begin{align*}
+f(0)=0,\ f(1)=0 \quad &\Rightarrow\quad H\ket{\psi_{\text{top}}} = \ket{0}, \\
+f(0)=1,\ f(1)=1 \quad &\Rightarrow\quad H\ket{\psi_{\text{top}}} = \ket{0}, \\
+f(0)=0,\ f(1)=1 \quad &\Rightarrow\quad H\ket{\psi_{\text{top}}} = \ket{1}, \\
+f(0)=1,\ f(1)=0 \quad &\Rightarrow\quad H\ket{\psi_{\text{top}}} = \ket{1}.
+\end{align*}
+
+\subsection*{5. Final Measurement}
+
+\[
+\boxed{
+\begin{cases}
+\ket{0}, & \text{if $f$ is constant}, \\
+\ket{1}, & \text{if $f$ is balanced}.
+\end{cases}
+}
+\]
+
+Thus the Deutsch algorithm determines whether $f$ is constant or balanced using a single oracle query.
+
+\end{document}
