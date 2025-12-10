@@ -1,0 +1,249 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{geometry}
+\usepackage{physics} % For Dirac notation \ket{}, \bra{}
+\usepackage{tikz}
+\usepackage{quantikz} % Standard for quantum circuits in Overleaf
+
+\geometry{a4paper, margin=1in}
+
+\title{Deutsch-Jozsa Algorithm: N-qubits}
+\author{Dharmendra Tolani}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section*{Overview}
+We are implementing the initialization phase of the Deutsch-Jozsa algorithm. We will define $N$ as the number of qubits in the \textit{input register} (query register). The system also requires 1 \textit{ancilla} qubit.
+
+\begin{itemize}
+    \item \textbf{Total Qubits:} $N + 1$
+    \item \textbf{General Case:} $N$ input qubits.
+    \item \textbf{Our Example:} $N=2$ (Total 3 qubits: 2 input, 1 ancilla).
+    \item \textbf{Comparison Case:} $N=1$ (Total 2 qubits: 1 input, 1 ancilla - Original Deutsch Algo).
+\end{itemize}
+
+\section{Step 1: The Initial State ($\ket{\psi_0}$)}
+
+We start with all input qubits in the state $\ket{0}$ and the ancilla qubit prepared in the state $\ket{1}$.
+
+\subsection*{1.1 General Case ($N$ inputs)}
+The state of the system is the tensor product of $N$ zeros and one one.
+\[
+\ket{\psi_0} = \ket{0}^{\otimes N} \otimes \ket{1} = \ket{0}_0 \ket{0}_1 \dots \ket{0}_{N-1} \ket{1}_{anc}
+\]
+
+\subsection*{1.2 Specific Example ($N=2$, Total 3)}
+Here, we have 2 input qubits ($\ket{x_0}, \ket{x_1}$) and 1 ancilla.
+\[
+\ket{\psi_0} = \ket{0}\ket{0}\ket{1}
+\]
+
+\subsection*{1.3 Similarity with Basic Deutsch ($N=1$, Total 2)}
+In the simplest case, we only have 1 input.
+\[
+\ket{\psi_0} = \ket{0}\ket{1}
+\]
+
+\begin{center}
+\begin{quantikz}
+\lstick{$\ket{0}$} & \qw & \rstick[wires=3]{$\ket{\psi_0}$} \\
+\lstick{$\ket{0}$} & \qw & \\
+\lstick{$\ket{1}$} & \qw & 
+\end{quantikz}
+\end{center}
+
+\hrulefill
+
+\section{Step 2: Creating Superposition ($\ket{\psi_1}$)}
+
+We apply a Hadamard gate ($H$) to every qubit in the system to create a uniform superposition.
+
+\subsection*{2.1 General Case ($N$ inputs)}
+We apply $H^{\otimes N}$ to the input register and $H$ to the ancilla.
+\[
+\ket{\psi_1} = (H^{\otimes N} \otimes H) \ket{\psi_0}
+\]
+Expanding this:
+\[
+\ket{\psi_1} = \sum_{x \in \{0,1\}^N} \frac{\ket{x}}{\sqrt{2^N}} \otimes \left( \frac{\ket{0} - \ket{1}}{\sqrt{2}} \right)
+\]
+\textit{Note: The input register becomes an equal superposition of all possible $2^N$ bitstrings.}
+
+\subsection*{2.2 Specific Example ($N=2$, Total 3)}
+We apply $H$ to $\ket{0}\ket{0}\ket{1}$.
+\[
+\ket{\psi_1} = (H\ket{0}) \otimes (H\ket{0}) \otimes (H\ket{1})
+\]
+\[
+\ket{\psi_1} = \left(\frac{\ket{0}+\ket{1}}{\sqrt{2}}\right) \left(\frac{\ket{0}+\ket{1}}{\sqrt{2}}\right) \left(\frac{\ket{0}-\ket{1}}{\sqrt{2}}\right)
+\]
+If we expand the input register part:
+\[
+\ket{\psi_1} = \frac{1}{2} \left( \ket{00} + \ket{01} + \ket{10} + \ket{11} \right) \otimes \ket{-}
+\]
+Notice how the input register is now a superposition of 00, 01, 10, and 11.
+
+\subsection*{2.3 Similarity with Basic Deutsch ($N=1$, Total 2)}
+For the single bit case:
+\[
+\ket{\psi_1} = (H\ket{0}) \otimes (H\ket{1})
+\]
+\[
+\ket{\psi_1} = \left(\frac{\ket{0}+\ket{1}}{\sqrt{2}}\right) \left(\frac{\ket{0}-\ket{1}}{\sqrt{2}}\right)
+\]
+\textit{Observation:} The structure is identical. The ancilla always goes to the $\ket{-}$ state, and the input qubits always go to the $\ket{+}$ state.
+
+\vspace{1cm}
+
+\textbf{Circuit Diagram for Initialization:}
+
+\begin{center}
+\begin{quantikz}
+\lstick{$\ket{0}$} & \gate{H} & \qw & \rstick[wires=3]{$\ket{\psi_1}$} \\
+\lstick{$\ket{0}$} & \gate{H} & \qw & \\
+\lstick{$\ket{1}$} & \gate{H} & \qw & 
+\end{quantikz}
+\end{center}
+\section{Step 3: The Oracle Query ($U_f$)}
+
+The core of the algorithm is the "Black Box" or Oracle ($U_f$). This unitary operator evaluates the function $f(x)$ without us knowing the internal mechanics.
+
+The operation is defined as:
+\[
+U_f \ket{x}\ket{y} = \ket{x}\ket{y \oplus f(x)}
+\]
+where $\oplus$ denotes addition modulo 2 (XOR).
+
+\subsection*{3.1 Phase Kickback Mechanism}
+Because our ancilla qubit is initialized to the state $\ket{-} = \frac{\ket{0}-\ket{1}}{\sqrt{2}}$, the action of the Oracle creates a "Phase Kickback."
+\[
+U_f \ket{x} \left( \frac{\ket{0}-\ket{1}}{\sqrt{2}} \right) = \ket{x} \left( \frac{\ket{0 \oplus f(x)} - \ket{1 \oplus f(x)}}{\sqrt{2}} \right)
+\]
+This simplifies to:
+\[
+\ket{x} (-1)^{f(x)} \ket{-}
+\]
+The function $f(x)$ is now encoded in the \textit{phase} of the input qubits.
+
+\subsection*{3.2 General Case ($N$ inputs)}
+Applying $U_f$ to the superposition $\ket{\psi_1}$:
+\[
+\ket{\psi_2} = \sum_{x \in \{0,1\}^N} \frac{(-1)^{f(x)} \ket{x}}{\sqrt{2^N}} \otimes \ket{-}
+\]
+The ancilla remains unchanged ($\ket{-}$), but the signs of the input states $\ket{x}$ are flipped if $f(x)=1$.
+
+\subsection*{3.3 Specific Example ($N=2$, Total 3)}
+Our input register is in superposition of 4 states: $\ket{00}, \ket{01}, \ket{10}, \ket{11}$.
+\[
+\ket{\psi_2} = \frac{1}{2} \left[ (-1)^{f(00)}\ket{00} + (-1)^{f(01)}\ket{01} + (-1)^{f(10)}\ket{10} + (-1)^{f(11)}\ket{11} \right] \otimes \ket{-}
+\]
+Depending on the function $f(x)$, some terms will have a positive sign (+) and others a negative sign (-).
+
+\subsection*{3.4 Similarity with Basic Deutsch ($N=1$, Total 2)}
+For the 1-bit case, we only have two terms:
+\[
+\ket{\psi_2} = \frac{1}{\sqrt{2}} \left[ (-1)^{f(0)}\ket{0} + (-1)^{f(1)}\ket{1} \right] \otimes \ket{-}
+\]
+\textit{Observation:} In both cases, the oracle does not "collapse" the superposition; it merely marks the solutions with a negative phase.
+
+\vspace{1cm}
+
+\textbf{Circuit Diagram with Oracle:}
+
+
+\begin{center}
+\begin{quantikz}
+\lstick{$\ket{0}$} & \gate{H} & \gate[wires=3]{U_f} & \rstick[wires=3]{$\ket{\psi_2}$} \\
+\lstick{$\ket{0}$} & \gate{H} & & \\
+\lstick{$\ket{1}$} & \gate{H} & & 
+\end{quantikz}
+\end{center}
+\section{Step 4: Final Interference and Detailed Derivation}
+
+We apply a final layer of Hadamard gates ($H^{\otimes N}$) to the input register. This creates interference, canceling out wrong answers and amplifying the correct one.
+
+\subsection*{4.1 The State Before Final Hadamard ($\ket{\psi_{top}}$)}
+Let's focus strictly on the input register (ignoring the ancilla for a moment). After the oracle, our state is a superposition of all 4 basis states, weighted by the function $f(x)$.
+
+\[
+\ket{\psi_{top}} = \frac{1}{2} \left[ (-1)^{f(00)}\ket{00} + (-1)^{f(01)}\ket{01} + (-1)^{f(10)}\ket{10} + (-1)^{f(11)}\ket{11} \right]
+\]
+
+\subsection*{4.2 How Hadamard Affects Each Term}
+We now apply $H^{\otimes 2}$ to this state. The 2-qubit Hadamard transforms every single basis state into a superposition of \textit{all} states.
+\textbf{Crucially, every basis state contributes to the $\ket{00}$ output with a positive sign.}
+
+Let's look at the expansion for each basis state:
+\begin{align*}
+H^{\otimes 2}\ket{00} &= \frac{1}{2}(\mathbf{\ket{00}} + \ket{01} + \ket{10} + \ket{11}) \\
+H^{\otimes 2}\ket{01} &= \frac{1}{2}(\mathbf{\ket{00}} - \ket{01} + \ket{10} - \ket{11}) \\
+H^{\otimes 2}\ket{10} &= \frac{1}{2}(\mathbf{\ket{00}} + \ket{01} - \ket{10} - \ket{11}) \\
+H^{\otimes 2}\ket{11} &= \frac{1}{2}(\mathbf{\ket{00}} - \ket{01} - \ket{10} + \ket{11})
+\end{align*}
+Notice the bolded part: Every term starts with $+\frac{1}{2}\ket{00}$.
+
+\subsection*{4.3 Calculating the Amplitude of $\ket{00}$}
+To find the probability of measuring $\ket{00}$, we sum up the contributions from all 4 terms.
+
+We take the coefficient from our state $\ket{\psi_{top}}$ (which is $\frac{1}{2}(-1)^{f(x)}$) and multiply it by the contribution from the Hadamard expansion ($+\frac{1}{2}$).
+
+\[
+\text{Amplitude}_{00} = \underbrace{\frac{1}{2}}_{\text{From } \ket{\psi_{top}}} \times \left[ \underbrace{\frac{1}{2}(-1)^{f(00)}}_{\text{from } \ket{00}} + \underbrace{\frac{1}{2}(-1)^{f(01)}}_{\text{from } \ket{01}} + \underbrace{\frac{1}{2}(-1)^{f(10)}}_{\text{from } \ket{10}} + \underbrace{\frac{1}{2}(-1)^{f(11)}}_{\text{from } \ket{11}} \right]
+\]
+
+Factoring out the $\frac{1}{2}$ terms:
+\[
+\text{Amplitude}_{00} = \frac{1}{4} \left[ (-1)^{f(00)} + (-1)^{f(01)} + (-1)^{f(10)} + (-1)^{f(11)} \right]
+\]
+
+\subsection*{4.4 Testing the Cases}
+The probability of measuring $\ket{00}$ is $|\text{Amplitude}_{00}|^2$. Let's test this sum:
+
+\textbf{Case A: Constant Function} (e.g., $f(x)=0$ for all $x$)\\
+All exponents are 0, so $(-1)^0 = 1$.
+\[
+\text{Sum inside brackets} = (1 + 1 + 1 + 1) = 4
+\]
+\[
+\text{Amplitude}_{00} = \frac{1}{4}(4) = 1
+\]
+\[
+\textbf{Probability: } |1|^2 = 100\%
+\]
+
+\textbf{Case B: Balanced Function} (Two outputs are 0, two are 1)\\
+Two terms will be $(-1)^0 = +1$, and two terms will be $(-1)^1 = -1$.
+\[
+\text{Sum inside brackets} = (1 + 1 - 1 - 1) = 0
+\]
+\[
+\text{Amplitude}_{00} = \frac{1}{4}(0) = 0
+\]
+\[
+\textbf{Probability: } |0|^2 = 0\%
+\]
+
+\section{Step 5: Conclusion}
+By calculating the sum of the signed terms, we proved that:
+\begin{itemize}
+    \item If $f$ is \textbf{Constant}, the terms add up constructively $\to$ You measure $\ket{00}$.
+    \item If $f$ is \textbf{Balanced}, the terms cancel out exactly $\to$ You measure \textbf{anything but} $\ket{00}$.
+\end{itemize}
+
+\vspace{1cm}
+
+\textbf{Complete Circuit Diagram:}
+
+\begin{center}
+\begin{quantikz}
+\lstick{$\ket{0}$} & \gate{H} & \gate[wires=3]{U_f} & \gate{H} & \meter{} & \rstick{Measure} \\
+\lstick{$\ket{0}$} & \gate{H} & & \gate{H} & \meter{} & \rstick{Measure} \\
+\lstick{$\ket{1}$} & \gate{H} & & \qw & \qw & \rstick{Ignore}
+\end{quantikz}
+\end{center}
+
+\end{document}
