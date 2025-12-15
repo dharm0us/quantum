@@ -1,5 +1,5 @@
 # quantum
- Beginners' Guide to Practical Quantum Computing with IBM Qiskit Abhilash Nelson
+Quantum Computing 101
 
 In Anaconda:
  pip install qiskit
